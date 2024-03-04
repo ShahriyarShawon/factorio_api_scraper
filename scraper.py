@@ -200,22 +200,27 @@ def get_defines(url: str):
     soup = BeautifulSoup(req.content, "html.parser")
     defines_container = soup.find_all("h2", string="Defines")[-1].find_next_sibling()
     defines = [span.text.strip() for span in defines_container.find_all("span", class_="docs-attribute-name")]
+    truncated_defines = set(['.'.join(d.split(".")[:-1]) for d in defines])
     dicts = [get_define_dict(d.split(".")) for d in defines]
     final_dict = {}
     for d in dicts:
         final_dict = merge_nested_dicts(final_dict, d)
 
-    return final_dict["defines"]
+    return final_dict["defines"], truncated_defines
 
+def get_concepts(url: str):
+    req = requests.get(url)
+    soup = BeautifulSoup(req.content, "html.parser")
 
 if __name__ == "__main__":
-    factorio_api = FactorioApi([]) 
-    defines = get_defines("https://lua-api.factorio.com/latest/defines.html")
-    print(json.dumps(defines))
-    # classes = get_content_from_each_class_page("https://lua-api.factorio.com/latest/classes.html")
+    factorio_api = FactorioApi([])
+    defines, trunc_defs = get_defines("https://lua-api.factorio.com/latest/defines.html")
+    #concepts = get_concepts("https://lua-api.factorio.com/latest/concepts.html")
+    #print(json.dumps(defines))
+    #classes = get_content_from_each_class_page("https://lua-api.factorio.com/latest/classes.html")
 
     # factorio_api.classes = classes
     # with open("factorio_api.json", "w") as f:
-    #     dictionary = asdict(factorio_api) 
+    #     dictionary = asdict(factorio_api)
     #     f.writelines(json.dumps(dictionary, indent=2))
 

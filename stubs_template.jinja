@@ -1,5 +1,7 @@
 ---@meta
 
+---@diagnostic disable: duplicate-doc-field
+
 ---@class float 
 ---@class double 
 ---@class int 
@@ -22,7 +24,37 @@ local constants = setmetatable({}, {
 	}
 })
 
+{% macro render_lua_table(d) %}
+{% for key, value in d.items() %}
+{{ key }} = {% if value is mapping %}
+setmetatable({}, {
+	__index = {
+		{{ render_lua_table(value) }}
+	}
+})
+{% elif value is iterable and value is not string %}
+setmetatable({}, {
+	__index = {
+		{% for item in value %}
+		{{ item }} = "{{item}}"{% if not loop.last %},
+		{% endif %}
+		{% endfor %}
+	}
+})
+{% else %}
+		{{ value|stringformat('%r') }}
+{% endif %}{% if not loop.last %}, {% endif %}
+{% endfor %}
+{% endmacro %}
+--- DEFINES 
+local defines = setmetatable({}, {
+	__index = {
+		{{ render_lua_table(defines) }}
+	}
+})
 
+
+--- CLASSES
 
 {% for class in classes %}
 ---@class {{class.name}}
@@ -39,38 +71,10 @@ function {{class.name}}.{{method.name}}() end
 {% endfor %}
 
 
---- DEFINES 
-
-{% macro render_lua_table(d) %}
-    {% for key, value in d.items() %}
-{{ key }} = {% if value is mapping %}
-setmetatable({}, {
-	__index = { 
-		{{ render_lua_table(value) }}
-	}
-})
-{% elif value is iterable and value is not string %}
-setmetatable({}, { 
-	__index = { 
-		{% for item in value %}
-		{{ item }} = "{{item}}"{% if not loop.last %}, 
-		{% endif %}
-		{% endfor %} 
-	}
-})
-
-{% else %}
-		{{ value|stringformat('%r') }}
-{% endif %}{% if not loop.last %}, {% endif %}
-    {% endfor %}
-{% endmacro %}
-
-
-local defines = setmetatable({}, {
-	__index = { 
-		{{ render_lua_table(defines) }} 
-	}
-})
 
 ---@type LuaBootstrap
 script = LuaBootstrap{}
+---@type LuaGameScript
+game = LuaGameScript{}
+
+
